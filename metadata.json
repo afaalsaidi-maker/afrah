@@ -1,0 +1,8 @@
+{
+  "name": "Remix دليلك الذكي في المصادر - مدرسة فاطمة بنت عتبة",
+  "description": "مرشد المعرفة الذكي - دليلك إلى الكتب والمصادر والخدمات في مركز مصادر التعلم بمدرسة فاطمة بنت عتبة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
