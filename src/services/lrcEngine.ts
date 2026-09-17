@@ -72,15 +72,8 @@ export interface ProcessQueryResult {
   followUps: string[];
 }
 
-export function processUserQuery(
-  rawQuery: string, 
-  booksDatabase: Book[], 
-  sessionsDatabase: LrcSession[] = LRC_SESSIONS, 
-  activitiesDatabase: LrcActivity[] = LRC_ACTIVITIES
-): ProcessQueryResult {
+export function processUserQuery(rawQuery: string, booksDatabase: Book[]): ProcessQueryResult {
   const norm = normalizeArabic(rawQuery);
-  const currentSessions = sessionsDatabase && sessionsDatabase.length > 0 ? sessionsDatabase : LRC_SESSIONS;
-  const currentActivities = activitiesDatabase && activitiesDatabase.length > 0 ? activitiesDatabase : LRC_ACTIVITIES;
 
   // 1. Check for Out-of-Scope (Non-LRC matters: cooking, football matches, politics, external games, weather outside school, etc.)
   const outOfScopePatterns = [
@@ -200,7 +193,7 @@ export function processUserQuery(
     norm.includes('المنفذه') ||
     norm.includes('المسجلة')
   ) {
-    let filteredSessions = [...currentSessions];
+    let filteredSessions = [...LRC_SESSIONS];
 
     if (norm.includes('اليوم')) {
       filteredSessions = filteredSessions.filter(s => s.day === 'الأحد' || s.date.includes('اليوم'));
@@ -241,7 +234,7 @@ export function processUserQuery(
       return {
         replyText: 'لم أجد حاليًا حصصًا مسجلة تطابق طلبك بدقة في جدول المركز 🌷\nيمكنك الاطلاع على الحصص المجدولة لبقية الأيام أو مراجعة أخصائية المصادر.',
         category: 'session',
-        sessionResults: currentSessions.slice(0, 3),
+        sessionResults: LRC_SESSIONS.slice(0, 3),
         followUps: [
           'ما الحصص المنفذة اليوم؟',
           'ما حصص العلوم المنفذة في المركز؟',
@@ -266,7 +259,7 @@ export function processUserQuery(
     return {
       replyText: 'بكل سرور 🌷 إليكِ البرامج والأنشطة المعتمدة في مركز مصادر التعلم بمدرسة فاطمة بنت عتبة:',
       category: 'activity',
-      activityResults: currentActivities,
+      activityResults: LRC_ACTIVITIES,
       followUps: [
         'كيف أشارك في تحدي القراءة العربي؟',
         'متى تقام ورشة البحث السريع؟',

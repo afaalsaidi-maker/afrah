@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { AnalyticsRecord, Book, LrcSession, LrcActivity, BookStatus } from '../types';
+import { AnalyticsRecord, Book, LrcSession, LrcActivity } from '../types';
 import { 
   X, 
   Shield, 
   BarChart3, 
   BookOpen, 
+  ThumbsUp, 
+  ThumbsDown, 
+  HelpCircle, 
   AlertTriangle, 
   Plus, 
   Search, 
@@ -12,16 +15,8 @@ import {
   Star, 
   Lock, 
   Check, 
-  Trash2,
-  RefreshCw,
-  Clock,
-  UserCheck,
-  Award,
-  Layers,
-  Sparkles
+  RefreshCw 
 } from 'lucide-react';
-import { GitHubSyncTab } from './dashboard/GitHubSyncTab';
-import { FullBackupPayload } from '../services/dataSync';
 
 interface SpecialistDashboardProps {
   isOpen: boolean;
@@ -29,19 +24,9 @@ interface SpecialistDashboardProps {
   analytics: AnalyticsRecord;
   books: Book[];
   onAddBook: (newBook: Book) => void;
-  onUpdateBookStatus?: (bookId: string, status: BookStatus) => void;
-  onDeleteBook?: (bookId: string) => void;
   onResolveQuestionNeedingUpdate: (id: string) => void;
   sessions: LrcSession[];
-  onAddSession?: (newSession: LrcSession) => void;
-  onDeleteSession?: (sessionId: string) => void;
   activities: LrcActivity[];
-  onAddActivity?: (newActivity: LrcActivity) => void;
-  onDeleteActivity?: (activityId: string) => void;
-  onUpdateActivityStatus?: (activityId: string, status: LrcActivity['status']) => void;
-  onImportBackup?: (data: Partial<FullBackupPayload>) => void;
-  onResetToDefault?: () => void;
-  lastSavedTime?: string;
 }
 
 export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
@@ -50,61 +35,14 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
   analytics,
   books,
   onAddBook,
-  onUpdateBookStatus,
-  onDeleteBook,
   onResolveQuestionNeedingUpdate,
   sessions,
-  onAddSession,
-  onDeleteSession,
-  activities,
-  onAddActivity,
-  onDeleteActivity,
-  onUpdateActivityStatus,
-  onImportBackup,
-  onResetToDefault,
-  lastSavedTime
+  activities
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
-  const [activeTab, setActiveTab] = useState<'analytics' | 'books' | 'sessions' | 'activities' | 'unanswered' | 'github'>('analytics');
-
-  // Book management states
-  const [bookFilter, setBookFilter] = useState('');
-  const [isAddingBook, setIsAddingBook] = useState(false);
-  const [newBookTitle, setNewBookTitle] = useState('');
-  const [newBookAuthor, setNewBookAuthor] = useState('');
-  const [newBookSubject, setNewBookSubject] = useState('');
-  const [newBookDewey, setNewBookDewey] = useState('');
-  const [newBookSection, setNewBookSection] = useState('قسم العلوم العامة');
-  const [newBookLocation, setNewBookLocation] = useState('الرف 5A');
-  const [newBookKeywords, setNewBookKeywords] = useState('');
-  const [newBookSummary, setNewBookSummary] = useState('');
-
-  // Session management states
-  const [isAddingSession, setIsAddingSession] = useState(false);
-  const [newSesLesson, setNewSesLesson] = useState('');
-  const [newSesTeacher, setNewSesTeacher] = useState('');
-  const [newSesSubject, setNewSesSubject] = useState('علوم');
-  const [newSesGrade, setNewSesGrade] = useState('الصف السابع 1');
-  const [newSesDay, setNewSesDay] = useState('الأحد');
-  const [newSesDate, setNewSesDate] = useState('اليوم الأحد');
-  const [newSesPeriod, setNewSesPeriod] = useState('الحصة الأولى');
-  const [newSesType, setNewSesType] = useState('عرض تفاعلي وشاشة ذكية');
-  const [newSesTools, setNewSesTools] = useState('الشاشة التفاعلية، أجهزة الحاسوب');
-  const [newSesActivity, setNewSesActivity] = useState('');
-
-  // Activity management states
-  const [isAddingActivity, setIsAddingActivity] = useState(false);
-  const [newActTitle, setNewActTitle] = useState('');
-  const [newActDescription, setNewActDescription] = useState('');
-  const [newActTarget, setNewActTarget] = useState('جميع طالبات المدرسة');
-  const [newActDate, setNewActDate] = useState('طوال الفصل الدراسي');
-  const [newActStatus, setNewActStatus] = useState<LrcActivity['status']>('قادم');
-  const [newActCoordinator, setNewActCoordinator] = useState('أخصائية مصادر التعلم');
-  const [newActLocation, setNewActLocation] = useState('مركز مصادر التعلم');
-
-  if (!isOpen) return null;
+  const [activeTab, setActiveTab] = useState<'analytics' | 'books' | 'unanswered' | 'sessions'>('analytics');
 
   const handleAuthenticate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -122,13 +60,28 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
     setPinError(false);
     setPinInput('');
   };
+  
+  // Book search & addition states
+  const [bookFilter, setBookFilter] = useState('');
+  const [isAddingBook, setIsAddingBook] = useState(false);
+  const [newBookTitle, setNewBookTitle] = useState('');
+  const [newBookAuthor, setNewBookAuthor] = useState('');
+  const [newBookSubject, setNewBookSubject] = useState('');
+  const [newBookDewey, setNewBookDewey] = useState('');
+  const [newBookSection, setNewBookSection] = useState('قسم العلوم العامة');
+  const [newBookLocation, setNewBookLocation] = useState('الرف 5A');
+  const [newBookKeywords, setNewBookKeywords] = useState('');
+  const [newBookSummary, setNewBookSummary] = useState('');
 
-  // Render Passcode Screen if not authenticated
+  if (!isOpen) return null;
+
+  // Render Passcode Screen if not authenticated (protecting student view)
   if (!isAuthenticated) {
     return (
       <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
         <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#2F8F89]/30 overflow-hidden text-right p-6 sm:p-7 relative">
           
+          {/* Close button */}
           <button
             onClick={onClose}
             className="absolute top-5 left-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors cursor-pointer"
@@ -145,7 +98,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
               إدارة المركز • خاص بالأخصائية
             </h3>
             <p className="text-xs text-[#123B5D]/70 mt-1.5 leading-relaxed max-w-xs">
-              هذه اللوحة مخصصة لإدارة السجلات وإحصائيات مركز مصادر التعلم وحفظ التغييرات لجيت هاب.
+              هذه اللوحة مخصصة لإدارة السجلات وإحصائيات مركز مصادر التعلم ولا تُعرض في واجهة الطالبات العامة.
             </p>
           </div>
 
@@ -228,58 +181,13 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
 
     onAddBook(bookObj);
     setIsAddingBook(false);
+    // Reset form
     setNewBookTitle('');
     setNewBookAuthor('');
     setNewBookSubject('');
     setNewBookDewey('');
     setNewBookKeywords('');
     setNewBookSummary('');
-  };
-
-  const handleCreateSession = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSesLesson.trim() || !newSesTeacher.trim()) return;
-
-    const sessionObj: LrcSession = {
-      id: `ses-${Date.now()}`,
-      lessonTitle: newSesLesson.trim(),
-      teacher: newSesTeacher.trim(),
-      subject: newSesSubject.trim(),
-      grade: newSesGrade.trim(),
-      day: newSesDay.trim(),
-      date: newSesDate.trim(),
-      period: newSesPeriod.trim(),
-      executionType: newSesType.trim(),
-      tools: newSesTools ? newSesTools.split('،').map(t => t.trim()).filter(Boolean) : ['الشاشة التفاعلية'],
-      activity: newSesActivity.trim() || 'أنشطة وتطبيقات تعليمية متنوعة داخل المركز'
-    };
-
-    if (onAddSession) onAddSession(sessionObj);
-    setIsAddingSession(false);
-    setNewSesLesson('');
-    setNewSesTeacher('');
-    setNewSesActivity('');
-  };
-
-  const handleCreateActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newActTitle.trim()) return;
-
-    const actObj: LrcActivity = {
-      id: `act-${Date.now()}`,
-      title: newActTitle.trim(),
-      description: newActDescription.trim() || 'فعالية تهدف لتعزيز القراءة والمهارات البحثية للطالبات.',
-      targetGroup: newActTarget.trim(),
-      date: newActDate.trim(),
-      status: newActStatus,
-      coordinator: newActCoordinator.trim(),
-      location: newActLocation.trim()
-    };
-
-    if (onAddActivity) onAddActivity(actObj);
-    setIsAddingActivity(false);
-    setNewActTitle('');
-    setNewActDescription('');
   };
 
   const filteredBooks = books.filter(b => 
@@ -290,8 +198,8 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-2 sm:p-5 overflow-y-auto animate-fadeIn">
-      <div className="bg-[#FAF8F2] w-full max-w-5xl rounded-3xl shadow-2xl border border-[#2F8F89]/30 overflow-hidden flex flex-col max-h-[94vh] text-right">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
+      <div className="bg-[#FAF8F2] w-full max-w-5xl rounded-3xl shadow-2xl border border-[#2F8F89]/30 overflow-hidden flex flex-col max-h-[92vh] text-right">
         
         {/* Modal Header */}
         <div className="bg-[#123B5D] text-white p-4 sm:p-5 flex items-center justify-between border-b border-[#2F8F89]/40 relative">
@@ -300,18 +208,13 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-bold">
                   لوحة القياس وإدارة مركز مصادر التعلم
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#2F8F89] text-white font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#2F8F89] text-white font-medium">
                   أخصائية المصادر
                 </span>
-                {lastSavedTime && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300 font-mono">
-                    ✓ {lastSavedTime}
-                  </span>
-                )}
               </div>
               <p className="text-xs text-[#EAF5FA]/80">
                 مدرسة فاطمة بنت عتبة • مؤشرات الأداء، السجلات، وتحديث قواعد البيانات
@@ -322,14 +225,14 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
-            title="إغلاق اللوحة"
+            title="إغلاق"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="bg-white border-b border-gray-200 px-3 sm:px-6 flex items-center gap-1 sm:gap-2 overflow-x-auto text-xs font-semibold scrollbar-none">
+        <div className="bg-white border-b border-gray-200 px-4 flex items-center gap-2 overflow-x-auto text-xs sm:text-sm font-semibold">
           <button
             onClick={() => setActiveTab('analytics')}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
@@ -339,43 +242,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
             }`}
           >
             <BarChart3 className="w-4 h-4 text-[#2F8F89]" />
-            <span>المؤشرات والإحصاءات</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('books')}
-            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'books'
-                ? 'border-[#2F8F89] text-[#123B5D]'
-                : 'border-transparent text-gray-500 hover:text-[#123B5D]'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-[#123B5D]" />
-            <span>سجل الكتب ({books.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sessions')}
-            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'sessions'
-                ? 'border-[#2F8F89] text-[#123B5D]'
-                : 'border-transparent text-gray-500 hover:text-[#123B5D]'
-            }`}
-          >
-            <Calendar className="w-4 h-4 text-[#2F8F89]" />
-            <span>الحصص المدرسية ({sessions.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('activities')}
-            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'activities'
-                ? 'border-[#2F8F89] text-[#123B5D]'
-                : 'border-transparent text-gray-500 hover:text-[#123B5D]'
-            }`}
-          >
-            <Star className="w-4 h-4 text-[#D5A84B]" />
-            <span>الأنشطة والفعاليات ({activities.length})</span>
+            <span>لوحة المؤشرات والإحصاءات</span>
           </button>
 
           <button
@@ -390,20 +257,28 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
             <span>أسئلة تحتاج تحديثًا ({analytics.questionsNeedingUpdate.length})</span>
           </button>
 
-          {/* GitHub Sync Tab with highlighted pill */}
           <button
-            onClick={() => setActiveTab('github')}
-            className={`py-3 px-3.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'github'
-                ? 'border-[#123B5D] text-[#123B5D] bg-[#EAF5FA]/50'
-                : 'border-transparent text-[#123B5D] hover:bg-[#FAF8F2]'
+            onClick={() => setActiveTab('books')}
+            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'books'
+                ? 'border-[#2F8F89] text-[#123B5D]'
+                : 'border-transparent text-gray-500 hover:text-[#123B5D]'
             }`}
           >
-            <span className="text-sm">📦</span>
-            <span className="font-extrabold text-[#123B5D]">حفظ ونشر GitHub</span>
-            <span className="text-[9px] bg-[#D5A84B] text-[#123B5D] font-bold px-1.5 py-0.5 rounded-full">
-              جديد
-            </span>
+            <BookOpen className="w-4 h-4 text-[#123B5D]" />
+            <span>سجل الكتب المعتمدة ({books.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('sessions')}
+            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'sessions'
+                ? 'border-[#2F8F89] text-[#123B5D]'
+                : 'border-transparent text-gray-500 hover:text-[#123B5D]'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-[#8B5CF6]" />
+            <span>الحصص والفعاليات</span>
           </button>
         </div>
 
@@ -446,7 +321,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Category Breakdown */}
+              {/* Category Breakdown (عدد أسئلة الكتب، ديوي، الاستعارة، اللوائح، الأنشطة، الحصص) */}
               <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs space-y-3">
                 <h3 className="font-bold text-sm sm:text-base text-[#123B5D] flex items-center justify-between">
                   <span>توزيع الاستفسارات حسب المحاور الرئيسية</span>
@@ -454,6 +329,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
+                  
                   {/* Books */}
                   <div className="space-y-1">
                     <div className="flex justify-between font-medium">
@@ -537,6 +413,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                       <div className="bg-[#8B5CF6] h-full rounded-full" style={{ width: '22%' }} />
                     </div>
                   </div>
+
                 </div>
               </div>
 
@@ -568,9 +445,61 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 2: BOOKS MANAGEMENT */}
+          {/* TAB 2: QUESTIONS NEEDING UPDATE */}
+          {activeTab === 'unanswered' && (
+            <div className="space-y-4">
+              <div className="p-3 bg-[#FEF7EC] rounded-2xl border border-[#D5A84B]/40 text-xs text-[#123B5D] flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-[#D5A84B] shrink-0" />
+                <span>
+                  يتم تسجيل الأسئلة هنا تلقائيًا عندما تضغط الطالبة على «لم أجد ما أبحث عنه» أو عند البحث عن كتب غير متوفرة، لمساعدة الأخصائية في تزويد المركز بالكتب المطلوبة.
+                </span>
+              </div>
+
+              {analytics.questionsNeedingUpdate.length === 0 ? (
+                <div className="bg-white p-8 rounded-2xl text-center text-gray-400 space-y-2">
+                  <Check className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <p className="font-semibold text-[#123B5D]">رائع! لا توجد أسئلة معلقة حاليًا</p>
+                  <p className="text-xs text-gray-500">تمت معالجة كافة الاستفسارات المطلوبة بنجاح.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {analytics.questionsNeedingUpdate.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-right"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-[#123B5D]">
+                            «{item.query}»
+                          </span>
+                          <span className="text-[11px] text-gray-400 font-mono">
+                            {item.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          سبب التحديث: {item.reason}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => onResolveQuestionNeedingUpdate(item.id)}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs border border-emerald-200 transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>تمت المعالجة وتوفير الكتاب</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: BOOKS MANAGEMENT */}
           {activeTab === 'books' && (
             <div className="space-y-4">
+              {/* Header and Add Button */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-gray-100">
                 <div className="relative flex-1">
                   <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
@@ -592,7 +521,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                 </button>
               </div>
 
-              {/* Add Book Form */}
+              {/* Add Book Form for Specialist */}
               {isAddingBook && (
                 <form
                   onSubmit={handleCreateBook}
@@ -731,7 +660,6 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                         <th className="p-3">رقم ديوي</th>
                         <th className="p-3">القسم والرف</th>
                         <th className="p-3">الحالة</th>
-                        <th className="p-3 text-center">إجراءات</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -746,36 +674,15 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
                             <div className="text-[10px] text-gray-400">{book.location}</div>
                           </td>
                           <td className="p-3">
-                            <select
-                              value={book.status}
-                              onChange={(e) => onUpdateBookStatus && onUpdateBookStatus(book.id, e.target.value as BookStatus)}
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                                book.status === 'متاح' 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                  : book.status === 'معار' 
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                                  : 'bg-sky-50 text-sky-700 border-sky-200'
-                              }`}
-                            >
-                              <option value="متاح">متاح</option>
-                              <option value="معار">معار</option>
-                              <option value="للقراءة الداخلية فقط">للقراءة الداخلية فقط</option>
-                            </select>
-                          </td>
-                          <td className="p-3 text-center">
-                            {onDeleteBook && (
-                              <button
-                                onClick={() => {
-                                  if (confirm(`هل أنتِ متأكدة من حذف كتاب «${book.title}»؟`)) {
-                                    onDeleteBook(book.id);
-                                  }
-                                }}
-                                className="p-1 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="حذف الكتاب"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              book.status === 'متاح' 
+                                ? 'bg-emerald-50 text-emerald-700' 
+                                : book.status === 'معار' 
+                                ? 'bg-amber-50 text-amber-700' 
+                                : 'bg-sky-50 text-sky-700'
+                            }`}>
+                              {book.status}
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -786,472 +693,65 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 3: SESSIONS */}
+          {/* TAB 4: SESSIONS & ACTIVITIES */}
           {activeTab === 'sessions' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-gray-100">
-                <div>
-                  <h3 className="font-bold text-sm sm:text-base text-[#123B5D]">
-                    جدول الحصص المدرسية المنفذة في المركز
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    يمكن للطالبات والمعلمات الاستعلام عن هذه الحصص عبر مرشد المعرفة الذكي.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setIsAddingSession(!isAddingSession)}
-                  className="px-4 py-2 rounded-xl bg-[#123B5D] hover:bg-[#1b4b74] text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4 text-[#D5A84B]" />
-                  <span>{isAddingSession ? 'إلغاء الإضافة' : 'إضافة حصة دراسية جديدة'}</span>
-                </button>
-              </div>
-
-              {/* Add Session Form */}
-              {isAddingSession && (
-                <form
-                  onSubmit={handleCreateSession}
-                  className="bg-white p-4 sm:p-5 rounded-2xl border border-[#2F8F89]/30 shadow-md space-y-3 animate-fadeIn text-xs sm:text-sm"
-                >
-                  <h4 className="font-bold text-[#123B5D] pb-2 border-b border-gray-100 flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-[#2F8F89]" />
-                    <span>تسجيل حصة جديدة في جدول المركز:</span>
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">عنوان الدرس / الموضوع *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newSesLesson}
-                        onChange={(e) => setNewSesLesson(e.target.value)}
-                        placeholder="مثال: الخلية النباتية والحيوانية"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">اسم المعلمة *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newSesTeacher}
-                        onChange={(e) => setNewSesTeacher(e.target.value)}
-                        placeholder="مثال: الأستاذة فاطمة البلوشية"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">المادة الدراسية</label>
-                      <input
-                        type="text"
-                        value={newSesSubject}
-                        onChange={(e) => setNewSesSubject(e.target.value)}
-                        placeholder="مثال: علوم، لغة عربية، رياضيات"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">الصف والشعبة</label>
-                      <input
-                        type="text"
-                        value={newSesGrade}
-                        onChange={(e) => setNewSesGrade(e.target.value)}
-                        placeholder="مثال: الصف السابع 2"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">اليوم والتاريخ</label>
-                      <input
-                        type="text"
-                        value={newSesDate}
-                        onChange={(e) => setNewSesDate(e.target.value)}
-                        placeholder="مثال: الأحد - 2026/09/14"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">الحصة</label>
-                      <input
-                        type="text"
-                        value={newSesPeriod}
-                        onChange={(e) => setNewSesPeriod(e.target.value)}
-                        placeholder="مثال: الحصة الثالثة"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-gray-700 mb-1">الأدوات المستخدمة (مفصولة بفواصل)</label>
-                    <input
-                      type="text"
-                      value={newSesTools}
-                      onChange={(e) => setNewSesTools(e.target.value)}
-                      placeholder="الشاشة التفاعلية، أجهزة الحاسوب، مجسمات الخلية"
-                      className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-gray-700 mb-1">وصف النشاط المنفذ</label>
-                    <textarea
-                      rows={2}
-                      value={newSesActivity}
-                      onChange={(e) => setNewSesActivity(e.target.value)}
-                      placeholder="وصف مختصر للنشاط التفاعلي خلال الحصة..."
-                      className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingSession(false)}
-                      className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold cursor-pointer"
-                    >
-                      إلغاء
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-[#2F8F89] hover:bg-[#26736e] text-white font-semibold flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>حفظ الحصة في الجدول</span>
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Sessions Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {sessions.map((s) => (
-                  <div key={s.id} className="bg-white p-4 rounded-2xl border border-gray-100 text-xs space-y-2 relative group">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold text-sm text-[#123B5D]">{s.lessonTitle}</h4>
-                        <div className="text-[#2F8F89] font-medium mt-0.5">المعلمة: {s.teacher} ({s.subject})</div>
+            <div className="space-y-6">
+              
+              {/* Sessions */}
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-[#123B5D] mb-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#2F8F89]" />
+                  <span>جدول الحصص المسجلة في المركز (الصفين السابع والثامن):</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {sessions.map((s) => (
+                    <div key={s.id} className="bg-white p-3.5 rounded-2xl border border-gray-100 text-xs">
+                      <div className="flex justify-between items-center mb-1 font-bold text-[#123B5D]">
+                        <span>{s.lessonTitle}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#123B5D] text-white">{s.grade}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#123B5D] text-white font-semibold">
-                          {s.grade}
-                        </span>
-                        {onDeleteSession && (
-                          <button
-                            onClick={() => {
-                              if (confirm(`حذف حصة «${s.lessonTitle}» من الجدول؟`)) {
-                                onDeleteSession(s.id);
-                              }
-                            }}
-                            className="p-1 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="حذف الحصة"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                      <div className="text-[#2F8F89] font-medium mb-2">المعلمة: {s.teacher} ({s.subject})</div>
+                      <div className="text-gray-500 text-[11px] bg-[#FAF8F2] p-2 rounded-xl">
+                        {s.date} • {s.period} • {s.executionType}
                       </div>
-                    </div>
-
-                    <div className="text-gray-500 text-[11px] bg-[#FAF8F2] p-2.5 rounded-xl space-y-1">
-                      <div>📅 {s.date} • ⏰ {s.period}</div>
-                      <div>🖥️ {s.executionType}</div>
-                      {s.activity && <div className="text-gray-600 text-[10px] pt-1 border-t border-gray-200/50">{s.activity}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: ACTIVITIES */}
-          {activeTab === 'activities' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-gray-100">
-                <div>
-                  <h3 className="font-bold text-sm sm:text-base text-[#123B5D]">
-                    البرامج والفعاليات المعتمدة في مركز مصادر التعلم
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    تظهر هذه الأنشطة للطالبات والمعلمات عند السؤال عن فعاليات المركز وتحدي القراءة.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setIsAddingActivity(!isAddingActivity)}
-                  className="px-4 py-2 rounded-xl bg-[#123B5D] hover:bg-[#1b4b74] text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4 text-[#D5A84B]" />
-                  <span>{isAddingActivity ? 'إلغاء الإضافة' : 'إضافة فعالية جديدة'}</span>
-                </button>
-              </div>
-
-              {/* Add Activity Form */}
-              {isAddingActivity && (
-                <form
-                  onSubmit={handleCreateActivity}
-                  className="bg-white p-4 sm:p-5 rounded-2xl border border-[#2F8F89]/30 shadow-md space-y-3 animate-fadeIn text-xs sm:text-sm"
-                >
-                  <h4 className="font-bold text-[#123B5D] pb-2 border-b border-gray-100 flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-[#2F8F89]" />
-                    <span>إضافة برنامج أو نشاط جديد للمركز:</span>
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">عنوان الفعالية أو البرنامج *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newActTitle}
-                        onChange={(e) => setNewActTitle(e.target.value)}
-                        placeholder="مثال: أسبوع القراءة الملهمة"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">المشرف / المنسق</label>
-                      <input
-                        type="text"
-                        value={newActCoordinator}
-                        onChange={(e) => setNewActCoordinator(e.target.value)}
-                        placeholder="مثال: أخصائية مصادر التعلم"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">الفئة المستهدفة</label>
-                      <input
-                        type="text"
-                        value={newActTarget}
-                        onChange={(e) => setNewActTarget(e.target.value)}
-                        placeholder="مثال: طالبات الصف السابع والثامن"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">الموعد والتاريخ</label>
-                      <input
-                        type="text"
-                        value={newActDate}
-                        onChange={(e) => setNewActDate(e.target.value)}
-                        placeholder="مثال: الأسبوع القادم - من الأحد إلى الخميس"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">حالة الفعالية</label>
-                      <select
-                        value={newActStatus}
-                        onChange={(e) => setNewActStatus(e.target.value as LrcActivity['status'])}
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      >
-                        <option value="قادم">فعالية قادمة</option>
-                        <option value="جاري">نشاط جارٍ حالياً</option>
-                        <option value="مكتمل">مكتمل</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block font-medium text-gray-700 mb-1">المكان</label>
-                      <input
-                        type="text"
-                        value={newActLocation}
-                        onChange={(e) => setNewActLocation(e.target.value)}
-                        placeholder="مثال: قاعة التعلم التفاعلي"
-                        className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-gray-700 mb-1">وصف الفعالية وأهدافها</label>
-                    <textarea
-                      rows={2}
-                      value={newActDescription}
-                      onChange={(e) => setNewActDescription(e.target.value)}
-                      placeholder="وصف مبسط لأهداف الفعالية وكيفية المشاركة فيها..."
-                      className="w-full p-2 rounded-xl bg-[#FAF8F2] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2F8F89]"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingActivity(false)}
-                      className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold cursor-pointer"
-                    >
-                      إلغاء
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-[#2F8F89] hover:bg-[#26736e] text-white font-semibold flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>حفظ الفعالية</span>
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Activities Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {activities.map((act) => (
-                  <div key={act.id} className="bg-white p-4 rounded-2xl border border-gray-100 text-xs space-y-2 relative">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-7 h-7 rounded-lg bg-[#FAF8F2] text-[#D5A84B] flex items-center justify-center font-bold text-sm border border-gray-200">
-                          ⭐
-                        </span>
-                        <div>
-                          <h4 className="font-bold text-sm text-[#123B5D]">{act.title}</h4>
-                          <span className="text-[11px] text-gray-400">إشراف: {act.coordinator}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <select
-                          value={act.status}
-                          onChange={(e) => onUpdateActivityStatus && onUpdateActivityStatus(act.id, e.target.value as LrcActivity['status'])}
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                            act.status === 'جاري'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : act.status === 'قادم'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-gray-50 text-gray-600 border-gray-200'
-                          }`}
-                        >
-                          <option value="قادم">قادم</option>
-                          <option value="جاري">جاري</option>
-                          <option value="مكتمل">مكتمل</option>
-                        </select>
-
-                        {onDeleteActivity && (
-                          <button
-                            onClick={() => {
-                              if (confirm(`حذف فعالية «${act.title}»؟`)) {
-                                onDeleteActivity(act.id);
-                              }
-                            }}
-                            className="p-1 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="حذف الفعالية"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="text-gray-600 text-xs leading-relaxed">{act.description}</p>
-
-                    <div className="text-gray-400 text-[10px] bg-[#FAF8F2] p-2 rounded-xl flex items-center justify-between">
-                      <span>المستهدف: {act.targetGroup}</span>
-                      <span>📅 {act.date}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: QUESTIONS NEEDING UPDATE */}
-          {activeTab === 'unanswered' && (
-            <div className="space-y-4">
-              <div className="p-3 bg-[#FEF7EC] rounded-2xl border border-[#D5A84B]/40 text-xs text-[#123B5D] flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-[#D5A84B] shrink-0" />
-                <span>
-                  يتم تسجيل الأسئلة هنا تلقائيًا عندما تضغط الطالبة على «لم أجد ما أبحث عنه» أو عند البحث عن كتب غير متوفرة، لمساعدة الأخصائية في تزويد المركز بالكتب المطلوبة.
-                </span>
-              </div>
-
-              {analytics.questionsNeedingUpdate.length === 0 ? (
-                <div className="bg-white p-8 rounded-2xl text-center text-gray-400 space-y-2">
-                  <Check className="w-8 h-8 text-emerald-500 mx-auto" />
-                  <p className="font-semibold text-[#123B5D]">رائع! لا توجد أسئلة معلقة حاليًا</p>
-                  <p className="text-xs text-gray-500">تمت معالجة كافة الاستفسارات المطلوبة بنجاح.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {analytics.questionsNeedingUpdate.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-right"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-[#123B5D]">
-                            «{item.query}»
-                          </span>
-                          <span className="text-[11px] text-gray-400 font-mono">
-                            {item.timestamp}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          سبب التحديث: {item.reason}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => onResolveQuestionNeedingUpdate(item.id)}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs border border-emerald-200 transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>تمت المعالجة وتوفير الكتاب</span>
-                      </button>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
 
-          {/* TAB 6: GITHUB SYNC & DATA PERSISTENCE */}
-          {activeTab === 'github' && (
-            <GitHubSyncTab
-              books={books}
-              sessions={sessions}
-              activities={activities}
-              analytics={analytics}
-              lastSavedTime={lastSavedTime}
-              onImportBackup={(data) => {
-                if (onImportBackup) onImportBackup(data);
-              }}
-              onResetToDefault={onResetToDefault}
-            />
+              {/* Activities */}
+              <div className="pt-3 border-t border-gray-200">
+                <h3 className="font-bold text-sm sm:text-base text-[#123B5D] mb-3 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-[#D5A84B]" />
+                  <span>البرامج والأنشطة المعتمدة في المركز:</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {activities.map((act) => (
+                    <div key={act.id} className="bg-white p-3.5 rounded-2xl border border-gray-100 text-xs">
+                      <div className="flex justify-between items-center mb-1 font-bold text-[#123B5D]">
+                        <span>{act.title}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{act.status}</span>
+                      </div>
+                      <p className="text-gray-600 line-clamp-2 my-1">{act.description}</p>
+                      <div className="text-gray-400 text-[10px]">
+                        المستهدف: {act.targetGroup} • {act.date}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
           )}
 
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-white p-3 sm:p-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <Lock className="w-3.5 h-3.5 text-[#2F8F89]" />
-              <span>بيانات المركز محمية • مدرسة فاطمة بنت عتبة</span>
-            </span>
-            {onResetToDefault && (
-              <button
-                onClick={() => {
-                  if (confirm('هل ترغبين باستعادة بيانات المركز إلى الحالة الافتراضية؟')) {
-                    onResetToDefault();
-                  }
-                }}
-                className="text-[10px] text-rose-500 hover:underline cursor-pointer mr-3"
-              >
-                استعادة الافتراضي
-              </button>
-            )}
-          </div>
+        <div className="bg-white p-3 sm:p-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+          <span className="flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 text-[#2F8F89]" />
+            <span>بيانات المركز محمية • مدرسة فاطمة بنت عتبة</span>
+          </span>
 
           <button
             onClick={onClose}
