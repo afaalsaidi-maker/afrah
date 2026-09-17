@@ -383,28 +383,42 @@ export const GitHubSyncTab: React.FC<GitHubSyncTabProps> = ({
         </div>
 
         {/* White screen diagnostic helper */}
-        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-xs space-y-2">
+        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-xs space-y-3">
           <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>إذا ظهرت لكِ صفحة بيضاء بعد فتح رابط GitHub Pages:</span>
+            <span>حل مشكلة الصفحة البيضاء على GitHub Pages (خلال دقيقة واحدة):</span>
           </div>
           <p className="text-amber-800 leading-relaxed">
-            السبب الأكثر شيوعاً هو اختيار <strong>Deploy from a branch</strong> بدلاً من <strong>GitHub Actions</strong> في إعدادات الصفحات:
+            سبب ظهور الصفحة البيضاء هو أن GitHub قام بقراءة الملف المصدري غير المترجم بدلاً من مجلد البناء الجاهز. لديكِ خياران كلاهما يحل المشكلة فوراً:
           </p>
-          <ol className="list-decimal list-inside space-y-1 text-amber-900 pr-1">
-            <li>
-              ادخلي لمستودعك على موقع GitHub واضغطي على <strong>Settings</strong> أعلى الصفحة.
-            </li>
-            <li>
-              من القائمة الجانبية اليسرى اختاري <strong>Pages</strong>.
-            </li>
-            <li>
-              تحت خيار <strong>Build and deployment</strong>، عند خانة <strong>Source</strong>: بدّلي الاختيار من <span dir="ltr" className="bg-white/80 px-1.5 py-0.5 rounded border border-amber-300 font-mono text-[11px]">Deploy from a branch</span> إلى <strong dir="ltr" className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-300 font-mono text-[11px]">GitHub Actions</strong>.
-            </li>
-            <li>
-              توجّهي إلى تبويب <strong>Actions</strong> بالأعلى وستجدين مسار البناء يعمل، وبمجرد انتهاء العلامة الخضراء (✓) افتحي الرابط وستعمل الصفحة بشكل كامل وسليم!
-            </li>
-          </ol>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            {/* Option A: Select /docs */}
+            <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs space-y-1.5">
+              <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">
+                الحل الأسرع (30 ثانية) ⭐
+              </span>
+              <h6 className="font-bold text-[#123B5D] text-xs">تحويل المجلد إلى docs/</h6>
+              <ol className="list-decimal list-inside space-y-1 text-gray-700 text-[11px] leading-relaxed">
+                <li>من مستودعك، اضغطي <strong>Settings</strong> ثم <strong>Pages</strong>.</li>
+                <li>تحت <strong>Branch</strong> (الفرع main): غيّري المجلد من <code className="bg-gray-100 px-1 py-0.5 rounded text-[10px]">/(root)</code> إلى <strong className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded text-[10px]">/docs</strong>.</li>
+                <li>اضغطي <strong>Save</strong>. سيفتح موقعك فوراً وبشكل سليم!</li>
+              </ol>
+            </div>
+
+            {/* Option B: GitHub Actions */}
+            <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs space-y-1.5">
+              <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold text-[10px]">
+                الحل التلقائي
+              </span>
+              <h6 className="font-bold text-[#123B5D] text-xs">اختيار GitHub Actions</h6>
+              <ol className="list-decimal list-inside space-y-1 text-gray-700 text-[11px] leading-relaxed">
+                <li>من مستودعك، اضغطي <strong>Settings</strong> ثم <strong>Pages</strong>.</li>
+                <li>تحت <strong>Source</strong>: بدّلي الاختيار إلى <strong className="text-blue-700 bg-blue-50 px-1 py-0.5 rounded text-[10px]">GitHub Actions</strong>.</li>
+                <li>توجّهي لتبويب <strong>Actions</strong> وانتظري انتهاء علامة الصح الخضراء.</li>
+              </ol>
+            </div>
+          </div>
         </div>
 
         {/* Code Preview Toggle */}
